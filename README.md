@@ -69,16 +69,15 @@ Ofrecer una herramienta para **aprender y experimentar** con la gestión de la C
 SchedSim/
 ├── CMakeLists.txt
 ├── README.md
-├── LICENSE
 ├── .gitignore
 ├── main.cpp
-├── estructuras/
+├── struct/
 │   ├── ArregloDinamico.h
 │   ├── Cola.h
 │   ├── ColaCircular.h
 │   ├── ColaPrioridad.h
 │   └── Pila.h
-├── nucleo/
+├── core/
 │   ├── Proceso.h
 │   ├── Planificador.h          # clase abstracta
 │   ├── PlanificadorFCFS.h
@@ -92,7 +91,7 @@ SchedSim/
 └── docs/                       # documentación y diagramas
 ```
 
-La separación en tres capas (`estructuras`, `nucleo`, `ui`) permite cambiar la interfaz o añadir estructuras y algoritmos sin reescribir el resto.
+La separación en tres capas (`struct`, `core`, `ui`) permite cambiar la interfaz o añadir estructuras y algoritmos sin reescribir el resto.
 
 ## Requisitos
 
@@ -103,7 +102,7 @@ La separación en tres capas (`estructuras`, `nucleo`, `ui`) permite cambiar la 
 ## Compilación y ejecución
 
 ```bash
-git clone https://github.com/<usuario>/SchedSim.git
+git clone https://github.com/SantiagoPelaez28/SchedSim.git
 cd SchedSim
 
 cmake -S . -B build
@@ -158,16 +157,6 @@ Tiempo: 0    1    2    3    4    5
 | **V2 en adelante** | Nuevas estructuras de datos y nuevas funcionalidades *(por definir)*. |
 | **Futuro** | Interfaz gráfica de usuario. |
 
-## Control de versiones
-
-- Rama `main`: versión estable.
-- Ramas de trabajo: `feature/<nombre>` para cada funcionalidad nueva.
-- Cada versión del proyecto se marca con una etiqueta: `v1.0`, `v2.0`, etc.
-
-## Licencia
-
-Por definir. Si no se elige otra, MIT es una opción sencilla para proyectos académicos y abiertos.
-
 ## Autoría
 
-- **[Tu nombre]**: desarrollo y diseño.
+- **Santiago Peláez**: desarrollo y diseño.
