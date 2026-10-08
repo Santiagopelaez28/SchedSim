@@ -69,16 +69,15 @@ Ofrecer una herramienta para **aprender y experimentar** con la gestión de la C
 SchedSim/
 ├── CMakeLists.txt
 ├── README.md
-├── LICENSE
 ├── .gitignore
 ├── main.cpp
-├── estructuras/
+├── struct/
 │   ├── ArregloDinamico.h
 │   ├── Cola.h
 │   ├── ColaCircular.h
 │   ├── ColaPrioridad.h
 │   └── Pila.h
-├── nucleo/
+├── core/
 │   ├── Proceso.h
 │   ├── Planificador.h          # clase abstracta
 │   ├── PlanificadorFCFS.h
@@ -92,7 +91,7 @@ SchedSim/
 └── docs/                       # documentación y diagramas
 ```
 
-La separación en tres capas (`estructuras`, `nucleo`, `ui`) permite cambiar la interfaz o añadir estructuras y algoritmos sin reescribir el resto.
+La separación en tres capas (`struct`, `core`, `ui`) permite cambiar la interfaz o añadir estructuras y algoritmos sin reescribir el resto.
 
 ## Requisitos
 
