@@ -26,11 +26,11 @@ public:
         return "Round Robin (quantum = " + std::to_string(quantum_) + ")";
     }
 
-    void agregar(std::size_t indiceProceso) override { listos_.insertar_primero(indiceProceso); }
+    void agregar(std::size_t indiceProceso) override { listos_.insertarPrimero(indiceProceso); }
 
     bool hayListos() const override { return !listos_.estaVacia(); }
 
-    std::size_t siguiente() override { return listos_.borrar_ultimo(); }
+    std::size_t siguiente() override { return listos_.borrarPrimero(); }
 
     int quantum(const Proceso&) const override { return quantum_; }
 

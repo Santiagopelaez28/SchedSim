@@ -51,7 +51,7 @@ public:
         return ultimo->sig->dato;
     }
 
-    void insertar_primero(const T& proceso) {
+    void insertarPrimero(const T& proceso) {
         Nodo* nuevo = new Nodo(proceso);
 
         if (estaVacia()) {
@@ -62,10 +62,10 @@ public:
         }
 
         ultimo = nuevo;
-        ++tamano_;
+        tamano_++;
     }
 
-    T borrar_ultimo() {
+    T borrarPrimero() {
         if (estaVacia()) {
             throw std::underflow_error("La cola esta vacia");
         }
@@ -80,14 +80,14 @@ public:
         }
 
         delete primero;
-        --tamano_;
+        tamano_--;
 
         return proceso;
     }
 
     void limpiar() {
         while (!estaVacia()) {
-            borrar_ultimo();
+            borrarPrimero();
         }
     }
 };
