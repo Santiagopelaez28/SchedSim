@@ -13,12 +13,10 @@
 #include "PlanificadorRR.h"
 
 /**
- * Catálogo de algoritmos disponibles y fábrica para crearlos.
+ * Catálogo de algoritmos disponibles y creación de los mismos.
  *
- * El menú de consola trabaja solo con este archivo: no necesita conocer las
- * clases concretas ni qué algoritmos usan quantum. Para añadir un algoritmo
- * nuevo hay que tocar solo aquí: un valor en el enum y un caso en cada switch
- * (el compilador avisa con -Wswitch si falta alguno).
+ * A partir de una clase enum, se puede generar un algoritmo de planificación especifico para la simulación. 
+ * El programa general de simulacion utiliza esta clase para utilizar los algoritmos sin acceder directamente a sus clases concretas.
  */
 enum class Algoritmo
 {
@@ -27,8 +25,10 @@ enum class Algoritmo
     Prioridad
 };
 
-// Nombre corto para mostrar en menús y tablas.
-inline std::string nombreCorto(Algoritmo algoritmo)
+/** Nombres de los algoritmos (Se muestran en pantalla al usuario).
+ * @param algoritmo El algoritmo para el cual crear el planificador.
+ */
+inline std::string nombre(Algoritmo algoritmo)
 {
     switch (algoritmo)
     {
@@ -39,10 +39,13 @@ inline std::string nombreCorto(Algoritmo algoritmo)
     case Algoritmo::Prioridad:
         return "Prioridad";
     }
-    throw std::logic_error("nombreCorto: algoritmo desconocido");
+    throw std::logic_error("nombre: algoritmo desconocido");
 }
 
-// ¿Necesita el usuario elegir un quantum para este algoritmo?
+/** Valida si un algoritmo depende o no de un quantum ingresado por el usuario.
+ * @param algoritmo El algoritmo para el cual crear el planificador. 
+ * @return Verdadero si el algoritmo depende de un quantum.
+ */
 inline bool usaQuantum(Algoritmo algoritmo)
 {
     switch (algoritmo)
@@ -57,7 +60,7 @@ inline bool usaQuantum(Algoritmo algoritmo)
     throw std::logic_error("usaQuantum: algoritmo desconocido");
 }
 
-//* Todos los algoritmos, en el orden en que se muestran en los menús.
+// Orden de los algorimos mostrados en la UI
 inline ArregloDinamico<Algoritmo> todosLosAlgoritmos()
 {
     ArregloDinamico<Algoritmo> lista;
@@ -68,12 +71,14 @@ inline ArregloDinamico<Algoritmo> todosLosAlgoritmos()
 }
 
 /**
- * Crea el planificador del algoritmo pedido.
+ * Creación del planificador para el algoritmo pedido.
  *
- * El quantum solo se usa si usaQuantum(algoritmo) es true; los demás lo ignoran,
+ * El quantum solo se usa si usaQuantum(algoritmo) retorna verdadero; los demás lo ignoran,
  * así en el modo de comparación se puede pasar el mismo quantum a todos.
  *
- * Lanza std::invalid_argument si Round Robin no recibe quantum o si no es > 0.
+ * @param algoritmo El algoritmo para el cual crear el planificador. 
+ * @param quantum El quantum a usar (Si aplica) y se ignora si el algoritmo no lo requiere.
+ * @return Un puntero único al planificador creado.
  */
 inline std::unique_ptr<Planificador> crearPlanificador(Algoritmo algoritmo,std::optional<int> quantum = std::nullopt)
 {
@@ -84,13 +89,13 @@ inline std::unique_ptr<Planificador> crearPlanificador(Algoritmo algoritmo,std::
     case Algoritmo::RoundRobin:
         if (!quantum.has_value())
         {
-            throw std::invalid_argument("crearPlanificador: Round Robin necesita un quantum");
+            throw std::invalid_argument("crearPlanificador: Round Robin necesita un quantum");  // Valida que el quantum sea proporcionado explicitamente por el usuario.
         }
-        return std::make_unique<PlanificadorRR>(*quantum); // valida que sea > 0
+        return std::make_unique<PlanificadorRR>(*quantum); // Valida que el quantum sea mayor a 0 en el constructor de PlanificadorRR.
     case Algoritmo::Prioridad:
         return std::make_unique<PlanificadorPrioridad>();
     }
     throw std::logic_error("crearPlanificador: algoritmo desconocido");
 }
 
-#endif // FABRICA_PLANIFICADORES_H
+#endif 
