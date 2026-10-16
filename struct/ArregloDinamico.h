@@ -110,7 +110,7 @@ public:
     {
         asegurarEspacio();
         datos_[tamano_] = std::move(valor);
-        ++tamano_;
+        tamano_++;
     }
 
     // Inserta en la posición dada (0 <= posicion <= tamano).
@@ -126,7 +126,7 @@ public:
             datos_[i] = std::move(datos_[i - 1]);
         }
         datos_[posicion] = std::move(valor);
-        ++tamano_;
+        tamano_++;
     }
 
     // Elimina el elemento de la posición dada y lo devuelve.
@@ -138,7 +138,7 @@ public:
         {
             datos_[i] = std::move(datos_[i + 1]);
         }
-        --tamano_;
+        tamano_--;
         return eliminado;
     }
 
@@ -149,7 +149,7 @@ public:
         {
             throw std::out_of_range("ArregloDinamico::quitarUltimo: arreglo vacio");
         }
-        --tamano_;
+        tamano_--;
         return std::move(datos_[tamano_]);
     }
 

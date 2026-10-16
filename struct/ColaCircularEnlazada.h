@@ -27,6 +27,7 @@ public:
         limpiar();
     }
 
+
     bool estaVacia() const {
         return ultimo == nullptr;
     }
@@ -35,7 +36,7 @@ public:
         return tamano_;
     }
 
-    T& frente() {
+    T& primero() {
         if (estaVacia()) {
             throw std::underflow_error("La cola esta vacia");
         }
@@ -43,7 +44,7 @@ public:
         return ultimo->sig->dato;
     }
 
-    const T& frente() const {
+    const T& primero() const {
         if (estaVacia()) {
             throw std::underflow_error("La cola esta vacia");
         }

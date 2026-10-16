@@ -18,7 +18,7 @@ class PlanificadorFCFS : public Planificador {
 public:
     std::string nombre() const override { return "FCFS (primero en llegar, primero en ser atendido)"; }
 
-    void agregar(std::size_t indiceProceso) override { listos_.insertarUltimo(indiceProceso); }
+    void agregar(std::size_t indiceProceso, const Proceso&) override { listos_.insertarUltimo(indiceProceso); }
 
     bool hayListos() const override { return !listos_.vacia(); }
 

@@ -24,7 +24,7 @@ public:
     virtual std::string nombre() const = 0;
 
     // Un proceso queda listo: acaba de llegar o fue expulsado de la CPU.
-    virtual void agregar(std::size_t indiceProceso) = 0;
+    virtual void agregar(std::size_t indiceProceso, const Proceso& proceso) = 0;
 
     virtual bool hayListos() const = 0;
 

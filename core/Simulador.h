@@ -4,25 +4,48 @@
 #include <algorithm>
 #include <cstddef>
 #include <iomanip>
+#include <limits>
 #include <ostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
 #include "../struct/ArregloDinamico.h"
+#include "../struct/ColaPrioridad.h"
 #include "Planificador.h"
 #include "Proceso.h"
 
-// Un tramo continuo del diagrama de Gantt. pid = -1 indica CPU ociosa.
+// Índice que marca un tramo de CPU ociosa (no corresponde a ningún proceso).
+constexpr std::size_t INDICE_OCIOSO = std::numeric_limits<std::size_t>::max();
+
+// Un tramo continuo del diagrama de Gantt. Es liviano a propósito (24 bytes):
+// guarda el índice del proceso en la tabla, no su nombre; el nombre se obtiene
+// al imprimir. pid = -1 e indice = INDICE_OCIOSO indican CPU ociosa.
 struct SegmentoGantt {
+    std::size_t indice = INDICE_OCIOSO;
     int pid = -1;
-    std::string etiqueta;
     int inicio = 0;
     int fin = 0;
 
     SegmentoGantt() = default;
-    SegmentoGantt(int pid_, std::string etiqueta_, int inicio_, int fin_)
-        : pid(pid_), etiqueta(std::move(etiqueta_)), inicio(inicio_), fin(fin_) {}
+    SegmentoGantt(int pid_, std::size_t indice_, int inicio_, int fin_)
+        : indice(indice_), pid(pid_), inicio(inicio_), fin(fin_) {}
+};
+
+// Un proceso que aún no ha llegado: se ordena por (llegada, posición en la tabla).
+struct EntradaLlegada {
+    int llegada = 0;
+    std::size_t indice = 0;
+
+    EntradaLlegada() = default;
+    EntradaLlegada(int llegada_, std::size_t indice_) : llegada(llegada_), indice(indice_) {}
+};
+
+struct PrecedeLlegada {
+    bool operator()(const EntradaLlegada& a, const EntradaLlegada& b) const {
+        if (a.llegada != b.llegada) return a.llegada < b.llegada;
+        return a.indice < b.indice;
+    }
 };
 
 /**
@@ -33,6 +56,11 @@ struct SegmentoGantt {
  * así se pueden comparar varios algoritmos creando un Simulador por algoritmo
  * con el mismo conjunto de procesos.
  *
+ * Los procesos que aún no han llegado esperan en una cola con prioridad ordenada
+ * por llegada, así admitir llegadas cuesta O(log n) y no hay que recorrer la tabla.
+ * El registro del diagrama de Gantt es opcional (registrarGantt) porque con
+ * muchos procesos ocupa mucha memoria y nadie lo lee.
+ *
  * Convención al coincidir eventos: las llegadas ocurridas durante un turno (o
  * justo cuando termina) entran a la cola de listos ANTES que el proceso que
  * fue expulsado por agotar su quantum.
@@ -41,6 +69,8 @@ class Simulador {
 public:
     explicit Simulador(const ArregloDinamico<Proceso>& procesos)
         : procesos_(procesos), tiempoTotal_(0), tiempoOcupado_(0) {
+        long long sumaRafagas = 0;
+        long long llegadaMaxima = 0;
         for (const Proceso& p : procesos_) {
             if (p.rafaga <= 0) {
                 throw std::invalid_argument("Simulador: la rafaga del proceso " + p.nombre +
@@ -50,6 +80,12 @@ public:
                 throw std::invalid_argument("Simulador: la llegada del proceso " + p.nombre +
                                             " no puede ser negativa");
             }
+            sumaRafagas += p.rafaga;
+            llegadaMaxima = std::max<long long>(llegadaMaxima, p.llegada);
+        }
+        // El reloj nunca pasa de (última llegada + suma de ráfagas): debe caber en int.
+        if (sumaRafagas + llegadaMaxima > std::numeric_limits<int>::max()) {
+            throw std::invalid_argument("Simulador: los tiempos de la simulacion exceden el rango de int");
         }
     }
 
@@ -69,7 +105,7 @@ public:
                 if (proxima < 0) {
                     throw std::logic_error("Simulador: no hay procesos listos ni por llegar");
                 }
-                agregarSegmento(-1, "--", reloj, proxima);
+                agregarSegmento(-1, INDICE_OCIOSO, reloj, proxima);
                 reloj = proxima;
                 continue;
             }
@@ -85,7 +121,7 @@ public:
             }
             int uso = std::min(limite, p.restante);
 
-            agregarSegmento(p.pid, etiquetaDe(p), reloj, reloj + uso);
+            agregarSegmento(p.pid, indice, reloj, reloj + uso);
             reloj += uso;
             tiempoOcupado_ += uso;
             p.restante -= uso;
@@ -99,11 +135,17 @@ public:
                 ++terminados;
             } else {
                 p.estado = EstadoProceso::Listo;
-                planificador.agregar(indice);    // vuelve al final de la cola
+                planificador.agregar(indice, p);    // vuelve a la cola de listos
             }
         }
         tiempoTotal_ = reloj;
     }
+
+    // Activa o desactiva el registro del diagrama de Gantt (activo por defecto).
+    // Con muchos procesos conviene desactivarlo: los tramos ocupan memoria y
+    // las métricas no dependen de ellos.
+    void registrarGantt(bool activo) { registrarGantt_ = activo; }
+    bool registraGantt() const { return registrarGantt_; }
 
     // ---------- Resultados ----------
 
@@ -124,20 +166,24 @@ public:
     // ---------- Salida por consola ----------
 
     void imprimirGantt(std::ostream& os) const {
+        if (!registrarGantt_) {
+            os << "(diagrama de Gantt desactivado)\n";
+            return;
+        }
         if (gantt_.estaVacio()) {
             os << "(sin ejecucion)\n";
             return;
         }
         std::size_t ancho = 5;
         for (const SegmentoGantt& s : gantt_) {
-            ancho = std::max(ancho, s.etiqueta.size() + 3);
+            ancho = std::max(ancho, etiquetaDeSegmento(s).size() + 3);
         }
         const int celda = static_cast<int>(ancho);
 
         const std::ios_base::fmtflags banderas = os.flags();
         os << std::left;
         for (const SegmentoGantt& s : gantt_) {
-            os << "| " << std::setw(celda - 2) << s.etiqueta;
+            os << "| " << std::setw(celda - 2) << etiquetaDeSegmento(s);
         }
         os << "|\n";
         for (const SegmentoGantt& s : gantt_) {
@@ -192,9 +238,16 @@ private:
     ArregloDinamico<SegmentoGantt> gantt_;
     int tiempoTotal_;
     int tiempoOcupado_;
+    ColaPrioridad<EntradaLlegada, PrecedeLlegada> porLlegar_;   // procesos que aún no llegan
+    bool registrarGantt_ = true;
 
     static std::string etiquetaDe(const Proceso& p) {
         return p.nombre.empty() ? "P" + std::to_string(p.pid) : p.nombre;
+    }
+
+    // Texto de un tramo del Gantt: nombre del proceso o "--" si la CPU estuvo ociosa.
+    std::string etiquetaDeSegmento(const SegmentoGantt& s) const {
+        return s.indice == INDICE_OCIOSO ? std::string("--") : etiquetaDe(procesos_[s.indice]);
     }
 
     void reiniciar() {
@@ -207,49 +260,40 @@ private:
         gantt_.limpiar();
         tiempoTotal_ = 0;
         tiempoOcupado_ = 0;
+        porLlegar_.limpiar();
+        for (std::size_t i = 0; i < procesos_.tamano(); ++i) {
+            porLlegar_.insertarUltimo(EntradaLlegada(procesos_[i].llegada, i));
+        }
     }
 
-    // Pasa a "Listo" (y entrega al planificador) todos los procesos nuevos cuya
-    // llegada ya ocurrió, en orden de llegada y, si empatan, de posición en la tabla.
+    // Entrega al planificador todos los procesos cuya llegada ya ocurrió, en orden
+    // de llegada y, si empatan, de posición en la tabla. Cada proceso sale de la
+    // cola de llegadas una sola vez: O(log n) por proceso.
     void admitirLlegadas(Planificador& planificador, int reloj) {
-        const std::size_t ninguno = procesos_.tamano();
-        while (true) {
-            std::size_t elegido = ninguno;
-            for (std::size_t i = 0; i < procesos_.tamano(); ++i) {
-                const Proceso& p = procesos_[i];
-                if (p.estado == EstadoProceso::Nuevo && p.llegada <= reloj &&
-                    (elegido == ninguno || p.llegada < procesos_[elegido].llegada)) {
-                    elegido = i;
-                }
-            }
-            if (elegido == ninguno) return;
-            procesos_[elegido].estado = EstadoProceso::Listo;
-            planificador.agregar(elegido);
+        while (!porLlegar_.estaVacia() && porLlegar_.primero().llegada <= reloj) {
+            const std::size_t indice = porLlegar_.borrarPrimero().indice;
+            procesos_[indice].estado = EstadoProceso::Listo;
+            planificador.agregar(indice, procesos_[indice]);
         }
     }
 
     // Menor llegada entre los procesos que todavía no han llegado (-1 si no hay).
     int proximaLlegada() const {
-        int proxima = -1;
-        for (const Proceso& p : procesos_) {
-            if (p.estado == EstadoProceso::Nuevo && (proxima < 0 || p.llegada < proxima)) {
-                proxima = p.llegada;
-            }
-        }
-        return proxima;
+        return porLlegar_.estaVacia() ? -1 : porLlegar_.primero().llegada;
     }
 
     // Añade un tramo al Gantt, fusionándolo con el anterior si es del mismo
     // proceso y es contiguo (por ejemplo, cuando un proceso queda solo en la cola).
-    void agregarSegmento(int pid, const std::string& etiqueta, int inicio, int fin) {
+    void agregarSegmento(int pid, std::size_t indice, int inicio, int fin) {
+        if (!registrarGantt_) return;
         if (!gantt_.estaVacio()) {
             SegmentoGantt& ultimo = gantt_[gantt_.tamano() - 1];
-            if (ultimo.pid == pid && ultimo.fin == inicio) {
+            if (ultimo.indice == indice && ultimo.fin == inicio) {
                 ultimo.fin = fin;
                 return;
             }
         }
-        gantt_.agregar(SegmentoGantt(pid, etiqueta, inicio, fin));
+        gantt_.agregar(SegmentoGantt(pid, indice, inicio, fin));
     }
 
     double promedio(int (Proceso::*metrica)() const) const {
