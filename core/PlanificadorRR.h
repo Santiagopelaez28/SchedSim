@@ -21,18 +21,25 @@ public:
             throw std::invalid_argument("PlanificadorRR: el quantum debe ser mayor que 0");
         }
     }
-
+    
     std::string nombre() const override {
         return "Round Robin (quantum = " + std::to_string(quantum_) + ")";
     }
-
+    
     void agregar(std::size_t indiceProceso,const Proceso&) override { listos_.insertarPrimero(indiceProceso); }
-
+    
     bool hayListos() const override { return !listos_.estaVacia(); }
-
+    
     std::size_t siguiente() override { return listos_.borrarPrimero(); }
-
+    
     int quantum(const Proceso&) const override { return quantum_; }
+    
+    void setQuantum(int quantum) {
+        if (quantum <= 0) {
+            throw std::invalid_argument("PlanificadorRR: el quantum debe ser mayor que 0");
+        }
+        quantum_ = quantum;
+    }
 
     // Contenido actual de la cola de listos (índices), de solo lectura.
     const ColaCircularEnlazada<std::size_t>& listos() const { return listos_; }

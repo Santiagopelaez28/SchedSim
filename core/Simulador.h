@@ -163,9 +163,31 @@ public:
     double retornoPromedio() const { return promedio(&Proceso::retorno); }
     double respuestaPromedio() const { return promedio(&Proceso::respuesta); }
 
+    // Mayor tiempo de espera de un proceso: muestra el peor caso (por ejemplo, la
+    // inanición de un proceso poco urgente), que el promedio puede ocultar.
+    int esperaMaxima() const {
+        int maxima = 0;
+        for (const Proceso& p : procesos_) {
+            maxima = std::max(maxima, p.espera());
+        }
+        return maxima;
+    }
+
     // ---------- Salida por consola ----------
 
-    void imprimirGantt(std::ostream& os) const {
+    // Valor para "sin límite" en los parámetros de cantidad de filas o de tramos.
+    static constexpr std::size_t SIN_LIMITE = std::numeric_limits<std::size_t>::max();
+
+    /**
+     * Diagrama de Gantt: por cada bloque, una línea con los nombres y otra con los
+     * instantes de inicio (y, al final, el instante en que termina el último tramo).
+     *
+     *   anchoMaximo  ancho máximo de línea en caracteres. Si el diagrama no cabe, se
+     *                parte en varios bloques. 0 = todo en un solo bloque.
+     *   maxTramos    solo se muestran los primeros maxTramos tramos.
+     */
+    void imprimirGantt(std::ostream& os, std::size_t anchoMaximo = 0,
+                       std::size_t maxTramos = SIN_LIMITE) const {
         if (!registrarGantt_) {
             os << "(diagrama de Gantt desactivado)\n";
             return;
@@ -174,65 +196,163 @@ public:
             os << "(sin ejecucion)\n";
             return;
         }
+        const std::size_t total = gantt_.tamano();
+        const std::size_t mostrados = std::min(total, maxTramos);
+        if (mostrados == 0) {
+            os << "(sin tramos que mostrar)\n";
+            return;
+        }
+
         std::size_t ancho = 5;
-        for (const SegmentoGantt& s : gantt_) {
-            ancho = std::max(ancho, etiquetaDeSegmento(s).size() + 3);
+        for (std::size_t i = 0; i < mostrados; ++i) {
+            ancho = std::max(ancho, etiquetaDeSegmento(gantt_[i]).size() + 3);
         }
         const int celda = static_cast<int>(ancho);
 
+        // Tramos por bloque: se deja sitio para el "|" final y hasta 10 dígitos del último instante.
+        std::size_t porBloque = mostrados;
+        if (anchoMaximo > 0) {
+            const std::size_t reservado = 11;
+            const std::size_t disponible = anchoMaximo > reservado ? anchoMaximo - reservado : 0;
+            porBloque = std::max<std::size_t>(1, disponible / ancho);
+        }
+
         const std::ios_base::fmtflags banderas = os.flags();
         os << std::left;
-        for (const SegmentoGantt& s : gantt_) {
-            os << "| " << std::setw(celda - 2) << etiquetaDeSegmento(s);
+        for (std::size_t desde = 0; desde < mostrados; desde += porBloque) {
+            const std::size_t hasta = std::min(mostrados, desde + porBloque);
+            if (desde > 0) os << "\n";
+            for (std::size_t i = desde; i < hasta; ++i) {
+                os << "| " << std::setw(celda - 2) << etiquetaDeSegmento(gantt_[i]);
+            }
+            os << "|\n";
+            for (std::size_t i = desde; i < hasta; ++i) {
+                os << std::setw(celda) << gantt_[i].inicio;
+            }
+            os << gantt_[hasta - 1].fin << "\n";
         }
-        os << "|\n";
-        for (const SegmentoGantt& s : gantt_) {
-            os << std::setw(celda) << s.inicio;
+        if (mostrados < total) {
+            os << "... se omiten " << (total - mostrados) << " tramos mas (se muestran "
+               << mostrados << " de " << total << ")\n";
         }
-        os << tiempoTotal_ << "\n";
         os.flags(banderas);
     }
 
     // Tabla de entrada: lo que se va a simular (menor prioridad = más urgente).
-    void imprimirProcesos(std::ostream& os) const {
+    // Solo se muestran las primeras maxFilas filas. El ancho de cada columna se
+    // adapta a los valores mostrados, así que las columnas nunca se pegan.
+    void imprimirProcesos(std::ostream& os, std::size_t maxFilas = SIN_LIMITE) const {
+        const std::size_t total = procesos_.tamano();
+        const std::size_t mostradas = std::min(total, maxFilas);
+        if (mostradas == 0 && total > 0) {
+            os << "(" << total << " procesos; se omite el detalle)\n";
+            return;
+        }
+
+        int wPid = 3, wNombre = 8, wLlegada = 7, wRafaga = 6, wPrioridad = 9;
+        for (std::size_t i = 0; i < mostradas; ++i) {
+            const Proceso& p = procesos_[i];
+            wPid = std::max(wPid, anchoNumero(p.pid));
+            wNombre = std::max(wNombre, static_cast<int>(p.nombre.size()));
+            wLlegada = std::max(wLlegada, anchoNumero(p.llegada));
+            wRafaga = std::max(wRafaga, anchoNumero(p.rafaga));
+            wPrioridad = std::max(wPrioridad, anchoNumero(p.prioridad));
+        }
+
         const std::ios_base::fmtflags banderas = os.flags();
-        os << std::left << std::setw(5) << "PID" << std::setw(10) << "Nombre" << std::right
-           << std::setw(9) << "Llegada" << std::setw(8) << "Rafaga" << std::setw(11)
-           << "Prioridad" << "\n";
-        for (const Proceso& p : procesos_) {
-            os << std::left << std::setw(5) << p.pid << std::setw(10) << p.nombre << std::right
-               << std::setw(9) << p.llegada << std::setw(8) << p.rafaga << std::setw(11)
-               << p.prioridad << "\n";
+        os << std::left << std::setw(wPid + 2) << "PID" << std::setw(wNombre + 2) << "Nombre"
+           << std::right << std::setw(wLlegada + 2) << "Llegada" << std::setw(wRafaga + 2)
+           << "Rafaga" << std::setw(wPrioridad + 2) << "Prioridad" << "\n";
+        for (std::size_t i = 0; i < mostradas; ++i) {
+            const Proceso& p = procesos_[i];
+            os << std::left << std::setw(wPid + 2) << p.pid << std::setw(wNombre + 2) << p.nombre
+               << std::right << std::setw(wLlegada + 2) << p.llegada << std::setw(wRafaga + 2)
+               << p.rafaga << std::setw(wPrioridad + 2) << p.prioridad << "\n";
+        }
+        if (mostradas < total) {
+            os << "... se omiten " << (total - mostradas) << " procesos mas (se muestran "
+               << mostradas << " de " << total << ")\n";
         }
         os.flags(banderas);
     }
 
-    void imprimirMetricas(std::ostream& os) const {
+    // Tabla de resultados por proceso (solo las primeras maxFilas filas) seguida del
+    // resumen. El ancho de cada columna se adapta a los valores mostrados.
+    void imprimirMetricas(std::ostream& os, std::size_t maxFilas = SIN_LIMITE) const {
+        const std::size_t total = procesos_.tamano();
+        const std::size_t mostradas = std::min(total, maxFilas);
+
+        const std::ios_base::fmtflags banderas = os.flags();
+        if (mostradas == 0 && total > 0) {
+            os << "(" << total << " procesos; se omite el detalle)\n";
+        } else {
+            int wPid = 3, wNombre = 8, wLlegada = 7, wRafaga = 6, wInicio = 6, wFin = 4;
+            int wRetorno = 7, wEspera = 6, wRespuesta = 9;
+            for (std::size_t i = 0; i < mostradas; ++i) {
+                const Proceso& p = procesos_[i];
+                wPid = std::max(wPid, anchoNumero(p.pid));
+                wNombre = std::max(wNombre, static_cast<int>(p.nombre.size()));
+                wLlegada = std::max(wLlegada, anchoNumero(p.llegada));
+                wRafaga = std::max(wRafaga, anchoNumero(p.rafaga));
+                wInicio = std::max(wInicio, anchoNumero(p.inicio));
+                wFin = std::max(wFin, anchoNumero(p.fin));
+                wRetorno = std::max(wRetorno, anchoNumero(p.retorno()));
+                wEspera = std::max(wEspera, anchoNumero(p.espera()));
+                wRespuesta = std::max(wRespuesta, anchoNumero(p.respuesta()));
+            }
+
+            os << std::left << std::setw(wPid + 2) << "PID" << std::setw(wNombre + 2) << "Nombre"
+               << std::right << std::setw(wLlegada + 2) << "Llegada" << std::setw(wRafaga + 2)
+               << "Rafaga" << std::setw(wInicio + 2) << "Inicio" << std::setw(wFin + 2) << "Fin"
+               << std::setw(wRetorno + 2) << "Retorno" << std::setw(wEspera + 2) << "Espera"
+               << std::setw(wRespuesta + 2) << "Respuesta" << "\n";
+            for (std::size_t i = 0; i < mostradas; ++i) {
+                const Proceso& p = procesos_[i];
+                os << std::left << std::setw(wPid + 2) << p.pid << std::setw(wNombre + 2)
+                   << p.nombre << std::right << std::setw(wLlegada + 2) << p.llegada
+                   << std::setw(wRafaga + 2) << p.rafaga << std::setw(wInicio + 2) << p.inicio
+                   << std::setw(wFin + 2) << p.fin << std::setw(wRetorno + 2) << p.retorno()
+                   << std::setw(wEspera + 2) << p.espera() << std::setw(wRespuesta + 2)
+                   << p.respuesta() << "\n";
+            }
+            if (mostradas < total) {
+                os << "... se omiten " << (total - mostradas) << " procesos mas (se muestran "
+                   << mostradas << " de " << total << ")\n";
+            }
+        }
+        os.flags(banderas);
+
+        os << "\n";
+        imprimirResumen(os);
+    }
+
+    // Totales y promedios de toda la simulación (no depende de cuántos procesos se listen).
+    void imprimirResumen(std::ostream& os) const {
         const std::ios_base::fmtflags banderas = os.flags();
         const std::streamsize precision = os.precision();
 
-        os << std::left << std::setw(5) << "PID" << std::setw(10) << "Nombre" << std::right
-           << std::setw(9) << "Llegada" << std::setw(8) << "Rafaga" << std::setw(8) << "Inicio"
-           << std::setw(6) << "Fin" << std::setw(9) << "Retorno" << std::setw(8) << "Espera"
-           << std::setw(11) << "Respuesta" << "\n";
+        os << std::left << std::setw(21) << "Procesos:" << std::right << std::setw(10)
+           << procesos_.tamano() << "\n";
+        os << std::left << std::setw(21) << "Tiempo total:" << std::right << std::setw(10)
+           << tiempoTotal_ << "\n";
+        os << std::left << std::setw(21) << "CPU ocupada:" << std::right << std::setw(10)
+           << tiempoOcupado_ << "\n";
 
-        for (const Proceso& p : procesos_) {
-            os << std::left << std::setw(5) << p.pid << std::setw(10) << p.nombre << std::right
-               << std::setw(9) << p.llegada << std::setw(8) << p.rafaga << std::setw(8) << p.inicio
-               << std::setw(6) << p.fin << std::setw(9) << p.retorno() << std::setw(8) << p.espera()
-               << std::setw(11) << p.respuesta() << "\n";
-        }
-
-        os << std::fixed << std::setprecision(2) << std::right;
-        os << "\nEspera promedio:    " << std::setw(8) << esperaPromedio() << "\n";
-        os << "Retorno promedio:   " << std::setw(8) << retornoPromedio() << "\n";
-        os << "Respuesta promedio: " << std::setw(8) << respuestaPromedio() << "\n";
-        os << "Uso de CPU:         " << std::setw(8) << utilizacionCPU() << " %\n";
+        os << std::fixed << std::setprecision(2);
+        os << std::left << std::setw(21) << "Uso de CPU:" << std::right << std::setw(10)
+           << utilizacionCPU() << " %\n";
+        os << std::left << std::setw(21) << "Espera promedio:" << std::right << std::setw(10)
+           << esperaPromedio() << "\n";
+        os << std::left << std::setw(21) << "Retorno promedio:" << std::right << std::setw(10)
+           << retornoPromedio() << "\n";
+        os << std::left << std::setw(21) << "Respuesta promedio:" << std::right << std::setw(10)
+           << respuestaPromedio() << "\n";
+        os << std::left << std::setw(21) << "Espera maxima:" << std::right << std::setw(10)
+           << esperaMaxima() << "\n";
 
         os.flags(banderas);
         os.precision(precision);
     }
-
 private:
     ArregloDinamico<Proceso> procesos_;
     ArregloDinamico<SegmentoGantt> gantt_;
@@ -243,6 +363,21 @@ private:
 
     static std::string etiquetaDe(const Proceso& p) {
         return p.nombre.empty() ? "P" + std::to_string(p.pid) : p.nombre;
+    }
+
+    // Cantidad de caracteres que ocupa un entero al imprimirlo (incluye el signo).
+    static int anchoNumero(int valor) {
+        long long v = valor;
+        int caracteres = 1;
+        if (v < 0) {
+            ++caracteres;
+            v = -v;
+        }
+        while (v >= 10) {
+            v /= 10;
+            ++caracteres;
+        }
+        return caracteres;
     }
 
     // Texto de un tramo del Gantt: nombre del proceso o "--" si la CPU estuvo ociosa.
