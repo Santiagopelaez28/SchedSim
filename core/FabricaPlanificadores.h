@@ -13,56 +13,47 @@
 #include "PlanificadorRR.h"
 
 /**
- * Catálogo de algoritmos disponibles y creación de los mismos.
+ * Catálogo de algoritmos disponibles y fábrica para crearlos.
  *
- * A partir de una clase enum, se puede generar un algoritmo de planificación especifico para la simulación. 
- * El programa general de simulacion utiliza esta clase para utilizar los algoritmos sin acceder directamente a sus clases concretas.
+ * El menú de consola trabaja solo con este archivo: no necesita conocer las
+ * clases concretas ni qué algoritmos usan quantum. Para añadir un algoritmo
+ * nuevo hay que tocar solo aquí: un valor en el enum y un caso en cada switch
+ * (el compilador avisa con -Wswitch si falta alguno).
  */
-enum class Algoritmo
-{
-    FCFS,
-    RoundRobin,
-    Prioridad
-};
+enum class Algoritmo { FCFS, RoundRobin, Prioridad };
 
-/** Nombres de los algoritmos (Se muestran en pantalla al usuario).
- * @param algoritmo El algoritmo para el cual crear el planificador.
- */
-inline std::string nombre(Algoritmo algoritmo)
-{
-    switch (algoritmo)
-    {
-    case Algoritmo::FCFS:
-        return "FCFS";
-    case Algoritmo::RoundRobin:
-        return "Round Robin";
-    case Algoritmo::Prioridad:
-        return "Prioridad";
+// Nombre corto para mostrar en menús y tablas.
+inline std::string nombre(Algoritmo algoritmo) {
+    switch (algoritmo) {
+        case Algoritmo::FCFS: return "FCFS";
+        case Algoritmo::RoundRobin: return "Round Robin";
+        case Algoritmo::Prioridad: return "Prioridad";
     }
     throw std::logic_error("nombre: algoritmo desconocido");
 }
 
-/** Valida si un algoritmo depende o no de un quantum ingresado por el usuario.
- * @param algoritmo El algoritmo para el cual crear el planificador. 
- * @return Verdadero si el algoritmo depende de un quantum.
- */
-inline bool usaQuantum(Algoritmo algoritmo)
-{
-    switch (algoritmo)
-    {
-    case Algoritmo::FCFS:
-        return false;
-    case Algoritmo::RoundRobin:
-        return true;
-    case Algoritmo::Prioridad:
-        return false;
+// Descripción de una línea para los menús.
+inline std::string descripcion(Algoritmo algoritmo) {
+    switch (algoritmo) {
+        case Algoritmo::FCFS: return "primero en llegar, primero en ser atendido";
+        case Algoritmo::RoundRobin: return "turnos de duracion fija (quantum)";
+        case Algoritmo::Prioridad: return "sin expulsion; 1 = la mas urgente";
+    }
+    throw std::logic_error("descripcion: algoritmo desconocido");
+}
+
+// ¿Necesita el usuario elegir un quantum para este algoritmo?
+inline bool usaQuantum(Algoritmo algoritmo) {
+    switch (algoritmo) {
+        case Algoritmo::FCFS: return false;
+        case Algoritmo::RoundRobin: return true;
+        case Algoritmo::Prioridad: return false;
     }
     throw std::logic_error("usaQuantum: algoritmo desconocido");
 }
 
-// Orden de los algorimos mostrados en la UI
-inline ArregloDinamico<Algoritmo> todosLosAlgoritmos()
-{
+// Todos los algoritmos, en el orden en que se muestran en los menús.
+inline ArregloDinamico<Algoritmo> todosLosAlgoritmos() {
     ArregloDinamico<Algoritmo> lista;
     lista.agregar(Algoritmo::FCFS);
     lista.agregar(Algoritmo::RoundRobin);
@@ -71,31 +62,27 @@ inline ArregloDinamico<Algoritmo> todosLosAlgoritmos()
 }
 
 /**
- * Creación del planificador para el algoritmo pedido.
+ * Crea el planificador del algoritmo pedido.
  *
- * El quantum solo se usa si usaQuantum(algoritmo) retorna verdadero; los demás lo ignoran,
+ * El quantum solo se usa si usaQuantum(algoritmo) es true; los demás lo ignoran,
  * así en el modo de comparación se puede pasar el mismo quantum a todos.
  *
- * @param algoritmo El algoritmo para el cual crear el planificador. 
- * @param quantum El quantum a usar (Si aplica) y se ignora si el algoritmo no lo requiere.
- * @return Un puntero único al planificador creado.
+ * Lanza std::invalid_argument si Round Robin no recibe quantum o si no es > 0.
  */
-inline std::unique_ptr<Planificador> crearPlanificador(Algoritmo algoritmo,std::optional<int> quantum = std::nullopt)
-{
-    switch (algoritmo)
-    {
-    case Algoritmo::FCFS:
-        return std::make_unique<PlanificadorFCFS>();
-    case Algoritmo::RoundRobin:
-        if (!quantum.has_value())
-        {
-            throw std::invalid_argument("crearPlanificador: Round Robin necesita un quantum");  // Valida que el quantum sea proporcionado explicitamente por el usuario.
-        }
-        return std::make_unique<PlanificadorRR>(*quantum); // Valida que el quantum sea mayor a 0 en el constructor de PlanificadorRR.
-    case Algoritmo::Prioridad:
-        return std::make_unique<PlanificadorPrioridad>();
+inline std::unique_ptr<Planificador> crearPlanificador(Algoritmo algoritmo,
+                                                       std::optional<int> quantum = std::nullopt) {
+    switch (algoritmo) {
+        case Algoritmo::FCFS:
+            return std::make_unique<PlanificadorFCFS>();
+        case Algoritmo::RoundRobin:
+            if (!quantum.has_value()) {
+                throw std::invalid_argument("crearPlanificador: Round Robin necesita un quantum");
+            }
+            return std::make_unique<PlanificadorRR>(*quantum);   // valida que sea > 0
+        case Algoritmo::Prioridad:
+            return std::make_unique<PlanificadorPrioridad>();
     }
     throw std::logic_error("crearPlanificador: algoritmo desconocido");
 }
 
-#endif 
+#endif // FABRICA_PLANIFICADORES_H

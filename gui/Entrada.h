@@ -6,6 +6,7 @@
 #include <limits>
 #include <optional>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -91,12 +92,28 @@ inline std::string describirRango(int minimo, int maximo) {
 
 }  // namespace detalle
 
+// Se lanza cuando la entrada se cierra (fin de archivo) antes de recibir lo que se
+// pedía. Es un std::runtime_error, pero tiene tipo propio para que el menú pueda
+// distinguirla de un error cualquiera y terminar con elegancia.
+class EntradaCerrada : public std::runtime_error {
+public:
+    EntradaCerrada() : std::runtime_error("Entrada cerrada antes de recibir un valor valido") {}
+};
+
+// Lee una línea completa. Lanza EntradaCerrada si ya no hay más entrada.
+inline std::string leerLinea(std::istream& entrada) {
+    std::string linea;
+    if (!std::getline(entrada, linea)) throw EntradaCerrada();
+    return linea;
+}
+
 /**
  * Pide un entero en [minimo, maximo] y repite la pregunta hasta recibir uno válido.
  * Si se indica porDefecto, pulsar solo Enter lo elige.
  *
- * Lanza std::runtime_error si la entrada se cierra (fin de archivo) antes de recibir
- * un valor válido: sin esto, una entrada redirigida o cerrada giraría para siempre.
+ * Lanza EntradaCerrada (un std::runtime_error) si la entrada se cierra (fin de archivo)
+ * antes de recibir un valor válido: sin esto, una entrada redirigida o cerrada
+ * giraría para siempre.
  * Lanza std::invalid_argument si los parámetros no tienen sentido.
  */
 inline int leerEntero(std::istream& entrada, std::ostream& salida, const std::string& pregunta,
@@ -115,10 +132,7 @@ inline int leerEntero(std::istream& entrada, std::ostream& salida, const std::st
         salida << ": ";
         salida.flush();
 
-        std::string linea;
-        if (!std::getline(entrada, linea)) {
-            throw std::runtime_error("Entrada cerrada antes de recibir un valor valido");
-        }
+        const std::string linea = leerLinea(entrada);
         if (porDefecto.has_value() && detalle::soloEspacios(linea)) return *porDefecto;
 
         const std::optional<int> valor = parsearEntero(linea);
@@ -152,6 +166,92 @@ inline std::optional<int> pedirQuantumSiHaceFalta(std::istream& entrada, std::os
     }
     if (!algunoLoUsa) return std::nullopt;
     return leerQuantum(entrada, salida, porDefecto);
+}
+
+/**
+ * Pide la semilla de los procesos aleatorios. Enter = semilla aleatoria (devuelve
+ * std::nullopt); un número la fija, y con ella los mismos parámetros generan siempre
+ * los mismos procesos. Repite la pregunta si el texto no es una semilla válida.
+ */
+inline std::optional<unsigned> leerSemilla(std::istream& entrada, std::ostream& salida) {
+    while (true) {
+        salida << "Semilla (entero sin signo; Enter = aleatoria): ";
+        salida.flush();
+        const std::string linea = leerLinea(entrada);
+        if (detalle::soloEspacios(linea)) return std::nullopt;
+        const std::optional<unsigned> semilla = parsearSemilla(linea);
+        if (semilla.has_value()) return semilla;
+        salida << "  Valor invalido: escribe un entero entre 0 y "
+               << std::numeric_limits<unsigned>::max() << ", o Enter para una semilla aleatoria.\n";
+    }
+}
+
+/**
+ * Muestra los algoritmos numerados y pide cuáles elegir: números separados por
+ * espacios o comas (Enter = todos). Los repetidos se ignoran y el resultado sale en
+ * el orden del catálogo, sea cual sea el orden en que se escribieron. Exige al menos
+ * "minimo" algoritmos distintos (para comparar hacen falta dos).
+ */
+inline ArregloDinamico<Algoritmo> leerAlgoritmos(std::istream& entrada, std::ostream& salida,
+                                                 std::size_t minimo = 2) {
+    const ArregloDinamico<Algoritmo> catalogo = todosLosAlgoritmos();
+    if (minimo > catalogo.tamano()) {
+        throw std::invalid_argument("leerAlgoritmos: el minimo supera la cantidad de algoritmos");
+    }
+
+    salida << "Algoritmos disponibles:\n";
+    for (std::size_t i = 0; i < catalogo.tamano(); ++i) {
+        salida << "  " << (i + 1) << ". " << nombre(catalogo[i]) << "\n";
+    }
+
+    const int n = static_cast<int>(catalogo.tamano());
+    while (true) {
+        salida << "Cuales elegir (numeros separados por espacios o comas; Enter = todos): ";
+        salida.flush();
+        const std::string linea = leerLinea(entrada);
+
+        ArregloDinamico<bool> elegido;
+        for (std::size_t i = 0; i < catalogo.tamano(); ++i) elegido.agregar(false);
+
+        bool valida = true;
+        if (detalle::soloEspacios(linea)) {
+            for (std::size_t i = 0; i < elegido.tamano(); ++i) elegido[i] = true;
+        } else {
+            std::string texto = linea;
+            for (char& c : texto) {
+                if (c == ',') c = ' ';
+            }
+            std::istringstream palabras(texto);
+            std::string palabra;
+            bool hayNumeros = false;
+            while (palabras >> palabra) {
+                hayNumeros = true;
+                const std::optional<int> numero = parsearEntero(palabra);
+                if (!numero.has_value() || *numero < 1 || *numero > n) {
+                    valida = false;
+                    break;
+                }
+                elegido[static_cast<std::size_t>(*numero - 1)] = true;
+            }
+            if (!hayNumeros) valida = false;
+        }
+
+        if (!valida) {
+            salida << "  Valor invalido: escribe numeros entre 1 y " << n
+                   << " separados por espacios, o Enter para elegirlos todos.\n";
+            continue;
+        }
+
+        ArregloDinamico<Algoritmo> resultado;
+        for (std::size_t i = 0; i < catalogo.tamano(); ++i) {
+            if (elegido[i]) resultado.agregar(catalogo[i]);
+        }
+        if (resultado.tamano() < minimo) {
+            salida << "  Hay que elegir al menos " << minimo << " algoritmos distintos.\n";
+            continue;
+        }
+        return resultado;
+    }
 }
 
 // Aviso (no error) cuando el quantum es tan grande que Round Robin equivale a FCFS.

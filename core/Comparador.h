@@ -14,8 +14,9 @@
 #include "Simulador.h"
 
 /**
- * El modo simulación toma el resultado de cada algoritmo y lo devuelve en un arreglo,
- * esto pemite comparar las metricas de cada uno como tiempo de retorno, uso de CPU y demás sin multiplicar el uso de memoria.
+ * Resumen de una simulación: lo único que el modo de comparación conserva de
+ * cada algoritmo. No guarda el Gantt ni la tabla de procesos, así comparar con
+ * muchos procesos no multiplica el uso de memoria.
  */
 struct ResultadoAlgoritmo {
     Algoritmo algoritmo = Algoritmo::FCFS;
@@ -30,7 +31,7 @@ struct ResultadoAlgoritmo {
 };
 
 /**
- * Ejecuta cada algoritmo sobre una copia del mismo conjunto de procesos y devuelve
+ * Ejecuta cada algoritmo sobre una copia del MISMO conjunto de procesos y devuelve
  * un resultado por algoritmo, en el orden pedido.
  *
  * El quantum es único: lo usan los algoritmos que lo necesitan (Round Robin) y
@@ -59,7 +60,8 @@ inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
         }
     }
 
-    // Se crean todos los planificadores primero: si el quantum no sirve, falla antes de gastar tiempo simulando.
+    // Se crean todos los planificadores primero: si el quantum no sirve, falla
+    // antes de gastar tiempo simulando.
     ArregloDinamico<std::unique_ptr<Planificador>> planificadores(algoritmos.tamano());
     for (const Algoritmo algoritmo : algoritmos) {
         planificadores.agregar(crearPlanificador(algoritmo, quantum));
@@ -86,4 +88,4 @@ inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
     return resultados;
 }
 
-#endif 
+#endif // COMPARADOR_H
