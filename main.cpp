@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <optional>
@@ -22,6 +21,7 @@
 // int main(int argc, char* argv[]) {
 //     try {
 //         if (argc > 1) quantum = std::atoi(argv[1]);
+
 //         if (argc > 2) config.cantidad = std::atoi(argv[2]);
 //         if (argc > 3) config.semilla = static_cast<unsigned>(std::strtoul(argv[3], nullptr, 10));
 int main()

@@ -9,10 +9,10 @@ enum class EstadoProceso { Nuevo, Listo, Ejecutando, Terminado };
 /**
  * Proceso
  *
- * Datos de entrada: pid, nombre, llegada, rafaga y prioridad.
+ * Atributos: pid, nombre, llegada, rafaga y prioridad.
  * Datos que calcula el simulador: restante, estado, inicio y fin.
  *
- * Tiene constructor por defecto porque ArregloDinamico<Proceso> lo necesita.
+ * Tiene constructor por defecto para poder ser usado en ArregloDinamico.
  */
 struct Proceso {
     int pid = 0;
@@ -36,10 +36,10 @@ struct Proceso {
           prioridad(prioridad_),
           restante(rafaga_) {}
 
-    // Métricas (solo tienen sentido cuando el proceso ya terminó).
+    // Métricas (cuando el proceso termina)
     int retorno() const { return fin - llegada; }          // desde que llega hasta que termina
     int espera() const { return retorno() - rafaga; }      // tiempo en la cola de listos
     int respuesta() const { return inicio - llegada; }     // hasta su primera vez en CPU
 };
 
-#endif // PROCESO_H
+#endif 

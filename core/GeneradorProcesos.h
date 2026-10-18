@@ -12,30 +12,22 @@
 #include "Proceso.h"
 
 /**
- * Parámetros del generador. Los valores por defecto producen cargas pequeñas
- * y fáciles de seguir a mano.
- *
- * Los tiempos son int. Para que el reloj de la simulación nunca desborde, se exige
- *   cantidad * rafagaMax + llegadaMax <= INT_MAX (2147483647).
- *
- * Convención de prioridad: MENOR número = MAYOR prioridad (1 es la más urgente).
- * Las prioridades se sortean de forma uniforme y pueden repetirse; los empates
- * deben resolverse en el algoritmo (por ejemplo, por orden de llegada).
+ * Estructura que tiene como atributos datos relevantes para los procesos a crear.
  */
 struct ConfigGenerador {
-    // Tope de procesos por simulación. Con él la memoria queda acotada (unos
-    // 200 MB) y la simulación termina en pocos segundos.
-    static constexpr int MAX_PROCESOS = 1000000;
+    static constexpr int MAX_PROCESOS = 1000000;    // Maximo de procesos permitidos para generar
 
-    int cantidad = 30;                // cuántos procesos generar (1 a MAX_PROCESOS)
+    int cantidad = 30;
     int llegadaMin = 0;              // instante de llegada (>= 0)
     int llegadaMax = 10;
-    int rafagaMin = 1;               // tiempo de CPU requerido (>= 1)
+    int rafagaMin = 4;               // tiempo de CPU requerido (>= 1)
     int rafagaMax = 8;
     int prioridadMin = 1;            // la más urgente (>= 1)
-    int prioridadMax = 5;            // la menos urgente
+    int prioridadMax = 10;            // la menos urgente
     std::optional<unsigned> semilla; // si no se indica, se elige una al azar
 
+
+    // Modifica la cantidad de procesos a ingresar "c es ingresada por el usuario"
     void setCantidad(int c){
         if (c <= 0 || c > MAX_PROCESOS){
             throw std::invalid_argument("La cantidad de procesos debe estar entre 1 y " + std::to_string(MAX_PROCESOS));
@@ -47,13 +39,13 @@ struct ConfigGenerador {
 /**
  * GeneradorProcesos
  *
- * Genera un conjunto de procesos aleatorio pero REPRODUCIBLE: la semilla se
+ * Genera un conjunto de procesos aleatorio: la semilla se
  * fija al construir el generador y generar() siempre devuelve el mismo
  * conjunto para esa semilla. Para obtener un conjunto distinto, se crea otro
  * generador. La semilla usada se puede consultar con semilla() para mostrarla
  * en pantalla y volver a usarla.
  *
- * Nota: std::mt19937 es idéntico en todos los compiladores, pero las
+ * @note std::mt19937 es idéntico en todos los compiladores, pero las
  * distribuciones de <random> pueden variar entre implementaciones, así que la
  * misma semilla garantiza el mismo conjunto solo con el mismo compilador.
  */

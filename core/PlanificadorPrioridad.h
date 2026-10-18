@@ -9,9 +9,8 @@
 #include "Proceso.h"
 
 /**
- * Lo que el heap guarda de cada proceso listo: los datos para ordenarlo y el
- * índice a la tabla de procesos. Así el heap es autosuficiente y no depende de
- * que la tabla siga viva ni de su estado.
+ * Lo que el min-heap guarda de cada proceso listo son los datos para ordenarlo y el
+ * índice a la tabla de procesos.
  */
 struct EntradaListo {
     int prioridad = 0;
@@ -24,12 +23,10 @@ struct EntradaListo {
 };
 
 /**
- * Criterio de orden: a precede a b (sale antes) si
- *   1. tiene MENOR número de prioridad (1 es la más urgente);
- *   2. si empatan, llegó ANTES;
- *   3. si vuelven a empatar, está antes en la tabla de procesos.
- * El tercer criterio hace que el orden sea total: el resultado nunca depende
- * de detalles internos del heap.
+ * Criterio de orden: un proceso sale antes que otro si
+ *   - Tiene menor número de prioridad (1 es la más urgente).
+ *   - Si dos o más procesos tienen la misma prioridad, se atiende el que llegó ANTES.
+ *   - Si ambos criterios son iguales, se toma primero al que está antes en la tabla de procesos.
  */
 struct PrecedeEntradaListo {
     bool operator()(const EntradaListo& a, const EntradaListo& b) const {
@@ -40,14 +37,14 @@ struct PrecedeEntradaListo {
 };
 
 /**
- * PlanificadorPrioridad: prioridad SIN expulsión (no apropiativo).
+ * PlanificadorPrioridad: prioridad sin expulsión (no apropiativo).
  *
  * Cada vez que la CPU queda libre se elige, entre los procesos ya llegados, el
  * de mayor prioridad. Una vez que un proceso toma la CPU la conserva hasta
- * terminar (quantum = tiempo restante), aunque llegue otro más urgente: ese
+ * terminar, aunque llegue otro más urgente: ese
  * esperará a que la CPU se libere.
  *
- * Inconveniente conocido: la inanición. Un proceso de baja prioridad puede
+ * Problema: Un proceso de baja prioridad puede
  * esperar indefinidamente si siguen llegando procesos más urgentes.
  */
 class PlanificadorPrioridad : public Planificador {
@@ -73,4 +70,4 @@ private:
     ColaPrioridad<EntradaListo, PrecedeEntradaListo> listos_;
 };
 
-#endif // PLANIFICADOR_PRIORIDAD_H
+#endif 

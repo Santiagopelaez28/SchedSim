@@ -11,8 +11,8 @@
 /**
  * PlanificadorRR: Round Robin.
  *
- * La cola de listos es una cola circular: cada proceso usa la CPU como máximo
- * "quantum" unidades de tiempo y, si no terminó, vuelve al final de la cola.
+ * La cola de listos es una cola circular: cada proceso usa la CPU una cantidad definida de tiempo,
+ * si el proceso no termina de ejecutarse pasa al final de la cola.
  */
 class PlanificadorRR : public Planificador {
 public:
@@ -41,7 +41,7 @@ public:
         quantum_ = quantum;
     }
 
-    // Contenido actual de la cola de listos (índices), de solo lectura.
+    // Contenido actual de la cola de índices.
     const ColaCircularEnlazada<std::size_t>& listos() const { return listos_; }
 
 private:
@@ -49,4 +49,4 @@ private:
     ColaCircularEnlazada<std::size_t> listos_;
 };
 
-#endif // PLANIFICADOR_RR_H
+#endif

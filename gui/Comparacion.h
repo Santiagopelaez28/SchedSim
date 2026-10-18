@@ -57,7 +57,7 @@ inline FilaComparacion crearFila(const std::string& etiqueta, const ArregloDinam
     return fila;
 }
 
-}  // namespace detalle
+} 
 
 /**
  * Imprime la tabla comparativa: una columna por algoritmo y una fila por métrica.
@@ -140,4 +140,4 @@ inline void imprimirComparacion(std::ostream& os, const ArregloDinamico<Resultad
     }
 }
 
-#endif // COMPARACION_H
+#endif 

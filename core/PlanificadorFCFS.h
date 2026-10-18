@@ -8,10 +8,9 @@
 #include "Planificador.h"
 
 /**
- * PlanificadorFCFS: primero en llegar, primero en ser atendido.
+ * PlanificadorFCFS: First-Come First-Served.
  *
- * No hay expulsión: cuando un proceso toma la CPU la conserva hasta terminar
- * (quantum = tiempo restante). El Simulador entrega los procesos al
+ * No hay expulsión: cuando un proceso toma la CPU la conserva hasta terminar. El Simulador entrega los procesos al
  * planificador en orden de llegada, y la cola simple los atiende en ese orden.
  */
 class PlanificadorFCFS : public Planificador {
@@ -34,4 +33,4 @@ private:
     ListaFifo<std::size_t> listos_;
 };
 
-#endif // PLANIFICADOR_FCFS_H
+#endif
