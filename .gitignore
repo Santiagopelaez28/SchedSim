@@ -2,6 +2,8 @@
 # Compilación (CMake y genérico)
 # ==============================
 /build/
+/schedsim
+/schedsim.exe
 /bin/
 /out/
 cmake-build-*/
