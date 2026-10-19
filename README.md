@@ -63,11 +63,9 @@ Todos los algoritmos heredan de una interfaz común (`Planificador`) y el menú 
 | Estructura | Archivo | Uso en SchedSim |
 |---|---|---|
 | **Arreglo dinámico** | `struct/ArregloDinamico.h` | Tabla de procesos, tramos del Gantt, resultados de la comparación y almacenamiento interno del heap. |
-| **Cola simple** | `struct/Cola.h` | Cola de procesos listos de **FCFS**. |
+| **Cola simple** | `struct/ListaFIFO.h` | Cola de procesos listos de **FCFS**. |
 | **Cola circular** (con nodos enlazados) | `struct/ColaCircularEnlazada.h` | Cola de procesos listos de **Round Robin**: el proceso que agota su quantum vuelve al final. |
 | **Cola con prioridad** (heap binario sobre el arreglo dinámico) | `struct/ColaPrioridad.h` | Cola de listos del algoritmo de **Prioridad** y cola de procesos que aún no han llegado, ordenada por llegada. |
-| Pila | `struct/Pilas.h` | Implementada y probada, **todavía no se usa** en el simulador (está prevista para el modo paso a paso). |
-| Cola circular (con arreglo) | `struct/ColaCircular.h` | Implementada y probada como alternativa a la versión enlazada, **no se usa** en la versión 1. |
 
 ---
 
@@ -81,11 +79,9 @@ SchedSim/
 ├── main.cpp                       punto de entrada: crea y ejecuta el menú
 ├── struct/                        estructuras de datos propias (plantillas)
 │   ├── ArregloDinamico.h
-│   ├── Cola.h
-│   ├── ColaCircular.h
+│   ├── ListaFIFO.h
 │   ├── ColaCircularEnlazada.h
-│   ├── ColaPrioridad.h
-│   └── Pilas.h
+│   └── ColaPrioridad.h
 ├── core/                          modelo y simulación
 │   ├── Proceso.h
 │   ├── GeneradorProcesos.h        procesos aleatorios con semilla
@@ -100,19 +96,10 @@ SchedSim/
 │   ├── MenuConsola.h
 │   ├── Entrada.h                  lectura validada de datos
 │   ├── Salida.h                   qué mostrar según la cantidad de procesos
-│   └── Comparacion.h              tabla comparativa
-└── pruebas/                       16 archivos prueba_*.cpp
+└── └── Comparacion.h              tabla comparativa
 ```
 
-### Cómo agregar un algoritmo nuevo
 
-1. Crear `core/PlanificadorXxx.h` con una clase que herede de `Planificador` (`agregar`, `hayListos`, `siguiente`, `quantum`, `nombre`).
-2. Añadir un valor al `enum Algoritmo` de `core/FabricaPlanificadores.h` y un caso en cada `switch` (el compilador avisa si falta alguno).
-3. Agregar su archivo de pruebas en `pruebas/`.
-
-El menú y la comparación lo reconocen sin más cambios.
-
----
 
 ## Cómo compilar
 
@@ -125,7 +112,7 @@ El menú y la comparación lo reconocen sin más cambios.
 ### Con CMake (recomendado)
 
 ```bash
-git clone https://github.com/<usuario>/SchedSim.git
+git clone https://github.com/Santiagopelaez28/SchedSim.git
 cd SchedSim
 
 cmake -S . -B build
@@ -392,26 +379,7 @@ Para detectar errores de memoria, compila con `-DSCHEDSIM_SANITIZERS=ON` (ver [O
 ## Limitaciones de la versión 1
 
 - Una sola CPU, sin entrada/salida de los procesos y **sin costo de cambio de contexto**.
-- Los procesos son **solo aleatorios** (sin carga manual ni desde archivo).
-- La prioridad no tiene expulsión ni envejecimiento: un proceso poco urgente puede esperar mucho (inanición).
+- Los procesos son **solo aleatorios**
+- La prioridad no tiene expulsión ni envejecimiento: un proceso poco urgente puede esperar mucho
 - Los tiempos son enteros y deben caber en `int` (el programa lo valida).
-- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.
-
-## Hoja de ruta
-
-| Versión | Enfoque |
-|---|---|
-| **1.0** | Interfaz de consola con arreglo dinámico, cola, cola circular y cola con prioridad; algoritmos FCFS, Round Robin y Prioridad sin expulsión; modo de comparación. |
-| **Próximo** | Modo **paso a paso** con la pila (avanzar y deshacer). |
-| **Siguientes** | Costo de cambio de contexto, envejecimiento de prioridades, nuevas estructuras de datos (listas enlazadas, tablas hash, árboles, grafos), carga de procesos desde archivo e interfaz gráfica. |
-
-## Control de versiones
-
-- Rama `main`: versión estable.
-- Ramas de trabajo: `feature/<nombre>` para cada funcionalidad nueva.
-- Cada versión se marca con una etiqueta: `v1.0`, `v2.0`, etc.
-
-## Licencia y autoría
-
-- **Licencia:** por definir (MIT es una opción sencilla para proyectos académicos y abiertos).
-- **Autoría:** [Tu nombre].
+- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.gráfica. |
