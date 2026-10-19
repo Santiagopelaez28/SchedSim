@@ -29,7 +29,7 @@ SchedSim reproduce cómo un sistema operativo reparte la CPU entre varios proces
 
 En un sistema operativo hay casi siempre más procesos que núcleos de CPU. El **planificador** decide cuál usa la CPU en cada momento, y esa decisión cambia cuánto esperan los procesos, qué tan rápido responde el sistema y qué tan justo es el reparto. Entender esas diferencias solo con teoría es difícil.
 
-SchedSim convierte esas decisiones en algo que se puede ver y medir: el usuario elige un algoritmo (o varios para compararlos), la cantidad de procesos y, si quiere, una semilla para repetir el escenario; el programa genera los procesos, simula la ejecución y muestra el diagrama de Gantt y las métricas.
+SchedSim convierte esas decisiones en algo que se puede ver y medir: el usuario elige uno o varios algoritmos para comparar, la cantidad de procesos y, si quiere, una semilla de generación de procesos para repetir el escenario; el programa genera dichos procesos, simula la ejecución y muestra el diagrama de Gantt que permiten evidenciar en que ciclo se ejecuta cada proceso y las métricas como resumen del uso de CPU y tiempo total y promedio de la ejecución.
 
 ### Qué hace
 
