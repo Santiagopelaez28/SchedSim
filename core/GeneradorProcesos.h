@@ -27,13 +27,13 @@ struct ConfigGenerador {
     // 200 MB) y la simulación termina en pocos segundos.
     static constexpr int MAX_PROCESOS = 1000000;
 
-    int cantidad = 5;                // cuántos procesos generar (1 a MAX_PROCESOS)
+    int cantidad = 30;                // cuántos procesos generar (1 a MAX_PROCESOS)
     int llegadaMin = 0;              // instante de llegada (>= 0)
     int llegadaMax = 10;
-    int rafagaMin = 1;               // tiempo de CPU requerido (>= 1)
-    int rafagaMax = 8;
+    int rafagaMin = 4;               // tiempo de CPU requerido (>= 1)
+    int rafagaMax = 50;
     int prioridadMin = 1;            // la más urgente (>= 1)
-    int prioridadMax = 5;            // la menos urgente
+    int prioridadMax = 10;            // la menos urgente
     std::optional<unsigned> semilla; // si no se indica, se elige una al azar
 
     // Ajustes por método, por comodidad de la interfaz (los campos también son públicos).
