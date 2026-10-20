@@ -7,22 +7,17 @@
 
 /**
  * ArregloDinamico<T>
- *
- * Arreglo que crece automáticamente cuando se llena (duplica su capacidad).
- *
- * Complejidad:
- *   - acceso por índice ........ O(1)
- *   - agregar al final ......... O(1) amortizado
- *   - insertar / eliminar en el medio ... O(n)
- *   - redimensionar ............ O(n) (ocurre pocas veces)
- *
- * Requisito: T debe tener constructor por defecto y ser copiable/movible.
+ * 
+ * Este arreglo toma como valores validos objetos con constructor propio como lo son los procesos generados 
+ * por el programa, mantiene los métodos como insertar al final e insertar y borrar valores en una posición especifica,
+ * el arreglo duplica su tamaño cada vez que se llena, es decir, cuando tamano_ == capacidad_.
+ * 
+ * Esta plantilla es utilizada para realizar el monticulo min-heap para el manejo de la cola con prioridad.
  */
 template <typename T>
 class ArregloDinamico
 {
 public:
-    // ---------- Construcción y destrucción ----------
 
     explicit ArregloDinamico(std::size_t capacidadInicial = 4)
         : datos_(nullptr),
@@ -32,9 +27,9 @@ public:
         datos_ = new T[capacidad_];
     }
 
-    ~ArregloDinamico() { delete[] datos_; }
+    ~ArregloDinamico() { delete[] datos_; }     // Destructor
 
-    // Constructor de copia: copia profunda de los elementos.
+    // Constructor de copia
     ArregloDinamico(const ArregloDinamico &otro)
         : datos_(new T[otro.capacidad_]),
           tamano_(otro.tamano_),
@@ -46,7 +41,7 @@ public:
         }
     }
 
-    // Asignación por copia (copiar y intercambiar).
+    // Asignación por copia (intercambia valores entre un arreglo y otro sin perder memoria)
     ArregloDinamico &operator=(const ArregloDinamico &otro)
     {
         if (this != &otro)
@@ -57,7 +52,7 @@ public:
         return *this;
     }
 
-    // Constructor de movimiento: roba el bloque de memoria de "otro".
+    // Constructor de movimiento tomando el bloque de memoria de otro arreglo
     ArregloDinamico(ArregloDinamico &&otro) noexcept
         : datos_(otro.datos_), tamano_(otro.tamano_), capacidad_(otro.capacidad_)
     {
@@ -82,30 +77,34 @@ public:
         return *this;
     }
 
-    // ---------- Consulta ----------
 
+    // Métodos getters
     std::size_t tamano() const { return tamano_; }
     std::size_t capacidad() const { return capacidad_; }
+    // Validación de arreglo vacio
     bool estaVacio() const { return tamano_ == 0; }
 
-    // Acceso por índice con verificación de límites.
+    /** Acceso por índice con verificación de límites.
+     * Utiliza el metodo de verificar indice por si existe o no en el arreglo.
+     * @param indice Para verificar si dicho indice existe en el arreglo.
+     * @returns Un proceso que corresponde al valor insertado en la posición antes verifcada.
+    */
     T &operator[](std::size_t indice)
     {
         verificarIndice(indice);
         return datos_[indice];
     }
 
+    // Método de tipo constante, no es posible alterar el valor dentro del arreglo si se accede mediante éste.
     const T &operator[](std::size_t indice) const
     {
         verificarIndice(indice);
         return datos_[indice];
     }
 
-    // ---------- Modificación ----------
-
-    // Agrega al final. Recibe el valor por copia a propósito: si el valor
-    // fuera una referencia a un elemento del propio arreglo, redimensionar
-    // la dejaría apuntando a memoria liberada.
+    /** Agrega al final tomando una copia del valor a ingresar 
+     * @param valor De tipo de dato correspondiente al objeto, lo añade en la posición con valor = tamano_ y luego aumenta este ultimo
+    */
     void agregar(T valor)
     {
         asegurarEspacio();
@@ -113,7 +112,10 @@ public:
         tamano_++;
     }
 
-    // Inserta en la posición dada (0 <= posicion <= tamano).
+    /** Inserta en una posición dada 
+     * @param posicion El indice donde se insertará el dato
+     * @param valor El dato, en este caso de tipo proceso, a insertar en la posición dada
+    */
     void insertar(std::size_t posicion, T valor)
     {
         if (posicion > tamano_)
@@ -129,7 +131,9 @@ public:
         tamano_++;
     }
 
-    // Elimina el elemento de la posición dada y lo devuelve.
+    /** Elimina el elemento de la posición ingresada y lo devuelve 
+     * @param posicion El indice de donde se eliminará el dato
+    */
     T eliminarEn(std::size_t posicion)
     {
         verificarIndice(posicion);
@@ -142,7 +146,7 @@ public:
         return eliminado;
     }
 
-    // Elimina y devuelve el último elemento (útil para el heap y la pila).
+    // Elimina y devuelve el último elemento
     T quitarUltimo()
     {
         if (tamano_ == 0)
@@ -153,10 +157,12 @@ public:
         return std::move(datos_[tamano_]);
     }
 
-    // Vacía el arreglo conservando la capacidad.
+    // Vacía el arreglo conservando la capacidad
     void limpiar() { tamano_ = 0; }
 
-    // Garantiza una capacidad mínima sin cambiar el tamaño.
+    /** Garantiza una capacidad mínima sin cambiar el tamaño 
+     * @param nuevaCapacidad La capacidad objetivo para reservar dicho espacio en memoria
+    */
     void reservar(std::size_t nuevaCapacidad)
     {
         if (nuevaCapacidad > capacidad_)
@@ -165,7 +171,7 @@ public:
         }
     }
 
-    // ---------- Iteración (permite usar for (const auto& x : arreglo)) ----------
+    // Iteración
 
     T *begin() { return datos_; }
     T *end() { return datos_ + tamano_; }
@@ -194,7 +200,12 @@ private:
         }
     }
 
-    // Crea un bloque nuevo, traslada los elementos y libera el anterior.
+    /** Crea un bloque nuevo, traslada los elementos y libera el anterior. 
+     * Toma una capacidad objetivo y genera un arreglo vacio con dicha capacidad, luego, mueve los recursos
+     * de memoria de cada dato dentro del arreglo anterior al nuevo y elimina el anterior, el tamaño y los datos 
+     * se mantienen iguales.
+     * @param nuevaCapacidad La capacidad final con la cual se generará el nuevo arreglo
+    */
     void redimensionar(std::size_t nuevaCapacidad)
     {
         T *nuevo = new T[nuevaCapacidad];
@@ -207,6 +218,10 @@ private:
         capacidad_ = nuevaCapacidad;
     }
 
+    /** Mueve los datos de un arreglo a otro y viceversa sin generar copias
+     * Utiliza swap para intercambiar los recursos de memoria entre dos arreglos,
+     * esto cambia también el tamaño y la capacidad para evitar errores.
+     */
     void intercambiar(ArregloDinamico &otro) noexcept
     {
         std::swap(datos_, otro.datos_);
@@ -215,4 +230,4 @@ private:
     }
 };
 
-#endif // ARREGLO_DINAMICO_H
+#endif
