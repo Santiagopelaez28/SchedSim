@@ -13,11 +13,7 @@ SchedSim reproduce cómo un sistema operativo reparte la CPU entre varios proces
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Cómo compilar](#cómo-compilar)
 - [Manual de usuario](#manual-de-usuario)
-- [Pruebas](#pruebas)
 - [Limitaciones de la versión 1](#limitaciones-de-la-versión-1)
-- [Hoja de ruta](#hoja-de-ruta)
-- [Control de versiones](#control-de-versiones)
-- [Licencia y autoría](#licencia-y-autoría)
 
 ---
 
