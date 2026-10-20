@@ -73,7 +73,6 @@ Todos los algoritmos heredan de una interfaz común (`Planificador`) y el menú 
 
 ```
 SchedSim/
-├── CMakeLists.txt
 ├── README.md
 ├── .gitignore
 ├── main.cpp                       punto de entrada: crea y ejecuta el menú
@@ -342,44 +341,10 @@ En las pruebas con 1 000 000 de procesos, cada algoritmo tardó menos de un segu
 | Un error durante la simulación | Muestra `Error: ...` y vuelve al menú. |
 | La entrada se cierra (por ejemplo, Ctrl+D o el fin de un archivo redirigido) | Termina de forma ordenada con `Entrada cerrada. Saliendo de SchedSim.` |
 
-### Usar el programa con un guion
-
-Como el programa lee de la entrada estándar, se puede automatizar. Por ejemplo, comparar los tres algoritmos con quantum 3, 100 000 procesos y semilla 7, y salir:
-
-```bash
-printf '4\n\n3\n100000\n7\n0\n' | ./build/schedsim
-```
-
----
-
-## Pruebas
-
-Hay 16 archivos de pruebas en `pruebas/`: uno por cada estructura de datos y por cada componente (generador, algoritmos, simulador con cantidades grandes, salida, comparador, entrada y menú). Los algoritmos se comprueban con resultados **calculados a mano**, y el menú con sesiones de teclado simuladas.
-
-Con CMake:
-
-```bash
-cd build
-ctest --output-on-failure
-```
-
-(Con Visual Studio u otro generador de varias configuraciones: `ctest -C Release --output-on-failure`.)
-
-Una prueba suelta, sin CMake:
-
-```bash
-g++ -std=c++17 -O2 pruebas/prueba_fcfs.cpp -o prueba_fcfs
-./prueba_fcfs
-```
-
-Para detectar errores de memoria, compila con `-DSCHEDSIM_SANITIZERS=ON` (ver [Opciones de CMake](#opciones-de-cmake)) o a mano con `-fsanitize=address,undefined`.
-
----
-
 ## Limitaciones de la versión 1
 
 - Una sola CPU, sin entrada/salida de los procesos y **sin costo de cambio de contexto**.
 - Los procesos son **solo aleatorios**
 - La prioridad no tiene expulsión ni envejecimiento: un proceso poco urgente puede esperar mucho
 - Los tiempos son enteros y deben caber en `int` (el programa lo valida).
-- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.gráfica. |
+- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.gráfica.
