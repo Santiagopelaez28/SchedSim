@@ -303,4 +303,4 @@ Espera promedio:      225393.81
 - Los procesos son **solo aleatorios**
 - La prioridad no tiene expulsión ni envejecimiento: un proceso poco urgente puede esperar mucho
 - Los tiempos son enteros y deben caber en `int` (el programa lo valida).
-- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.gráfica.
+- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.
