@@ -1,10 +1,8 @@
 # SchedSim
 
-**Simulador didáctico de planificación de procesos de CPU, en C++17 y con interfaz de consola.**
+**Simulador didáctico de planificación de procesos de CPU, en C++ y con interfaz de consola.**
 
-SchedSim reproduce cómo un sistema operativo reparte la CPU entre varios procesos, permite **comparar algoritmos de planificación** sobre exactamente los mismos procesos y mide cada resultado con métricas de rendimiento. Todas las estructuras de datos del proyecto (arreglo dinámico, colas, cola circular, cola con prioridad y pila) están implementadas desde cero, como plantillas de C++, sin usar los contenedores de la biblioteca estándar.
-
-> **Versión:** 1.0 (interfaz de consola).
+SchedSim reproduce cómo un sistema operativo reparte la CPU entre varios procesos, permite **comparar algoritmos de planificación** sobre exactamente los mismos procesos y mide cada resultado con métricas de rendimiento. Todas las estructuras de datos del proyecto (arreglo dinámico, colas, cola circular y cola con prioridad con min-heap) están implementadas desde cero, como plantillas de C++, sin usar los contenedores de la biblioteca estándar.
 
 ---
 
@@ -15,11 +13,7 @@ SchedSim reproduce cómo un sistema operativo reparte la CPU entre varios proces
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Cómo compilar](#cómo-compilar)
 - [Manual de usuario](#manual-de-usuario)
-- [Pruebas](#pruebas)
 - [Limitaciones de la versión 1](#limitaciones-de-la-versión-1)
-- [Hoja de ruta](#hoja-de-ruta)
-- [Control de versiones](#control-de-versiones)
-- [Licencia y autoría](#licencia-y-autoría)
 
 ---
 
@@ -73,7 +67,6 @@ Todos los algoritmos heredan de una interfaz común (`Planificador`) y el menú 
 
 ```
 SchedSim/
-├── CMakeLists.txt
 ├── README.md
 ├── .gitignore
 ├── main.cpp                       punto de entrada: crea y ejecuta el menú
@@ -103,56 +96,20 @@ SchedSim/
 
 ## Cómo compilar
 
+Dado que el proyecto está creado utilizando únicamente archivos de cabecera, solo es necesario compilar `main.cpp` para generar el ejecutable principal.
+
 ### Requisitos
 
-- Un compilador con soporte de **C++17**. El proyecto se probó con **GCC 13** en Linux.
-- **CMake 3.16 o superior** (opcional, pero recomendado). Se probó con CMake 4.4.
+- Un compilador con soporte de **C++17**.
 - Git, para clonar el repositorio.
-
-### Con CMake (recomendado)
 
 ```bash
 git clone https://github.com/Santiagopelaez28/SchedSim.git
 cd SchedSim
 
-cmake -S . -B build
-cmake --build build
+g++ main.cpp -o schedsim
+./SchedSim
 ```
-
-El ejecutable queda en `build/schedsim` (en Windows con MinGW o Ninja, `build\schedsim.exe`; con Visual Studio, compila con `cmake --build build --config Release` y queda en `build\Release\schedsim.exe`).
-
-```bash
-./build/schedsim
-```
-
-Si no indicas otra cosa, CMake compila en modo `Release` (optimizado).
-
-### Con un solo comando, sin CMake
-
-Todo el código es de solo cabeceras, así que basta con compilar `main.cpp`:
-
-```bash
-g++ -std=c++17 -O2 main.cpp -o schedsim
-./schedsim
-```
-
-### Opciones de CMake
-
-| Opción | Efecto |
-|---|---|
-| `-DSCHEDSIM_TESTS=OFF` | No compila las pruebas (por defecto están activadas). |
-| `-DSCHEDSIM_SANITIZERS=ON` | Compila con AddressSanitizer y UBSan para detectar errores de memoria. Solo con GCC o Clang en Linux o macOS. Conviene combinarla con `-DCMAKE_BUILD_TYPE=Debug`. |
-
-Ejemplo con sanitizadores:
-
-```bash
-cmake -S . -B build-san -DSCHEDSIM_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-san
-```
-
-> Solo he podido verificar la compilación con GCC en Linux. En Windows (MinGW o Visual Studio) las instrucciones anteriores deberían funcionar, pero conviene comprobarlas en tu equipo.
-
----
 
 ## Manual de usuario
 
@@ -161,7 +118,7 @@ Los ejemplos de esta sección son salidas reales del programa, generadas con la 
 ### Iniciar el programa
 
 ```bash
-./build/schedsim
+./SchedSim
 ```
 
 Aparece el menú principal:
@@ -177,7 +134,7 @@ Seleccione una opcion:
 Opcion (entero entre 0 y 4):
 ```
 
-Escribe el número de la opción y pulsa Enter. Al terminar cada acción, el programa vuelve al menú hasta que elijas **0**.
+Escriba el número de la opción y pulse Enter. Al terminar cada acción, el programa vuelve al menú hasta que se elija la opción **0**.
 
 ### Datos que pide el programa
 
@@ -189,7 +146,7 @@ Según la opción, el programa pregunta, en este orden:
 | **Cantidad de procesos** | Siempre | Entero entre 1 y 1 000 000. Enter conserva el último valor (30 la primera vez). |
 | **Semilla** | Siempre | Entero entre 0 y 4 294 967 295. Enter elige una semilla **aleatoria**. |
 
-El valor por defecto aparece entre corchetes: `[Enter = 3]`. Si escribes algo que no sirve, el programa lo explica y **repite la pregunta**; nunca se cierra por un dato mal escrito.
+El valor por defecto aparece entre corchetes: `[Enter = 3]`. Si el usuario ingresa algo que no sirve, el programa lo explica y **repite la pregunta**; nunca se cierra por un dato mal escrito.
 
 ### Ejecutar un algoritmo (opciones 1 a 3)
 
@@ -236,7 +193,7 @@ Respuesta promedio:        6.80
 Espera maxima:               13
 ```
 
-**La semilla se muestra siempre** al final de la ejecución: escríbela la próxima vez para repetir el mismo escenario.
+**La semilla se muestra siempre** al final de la ejecución: Escríbela la próxima vez para repetir el mismo escenario.
 
 #### Cómo leer los resultados
 
@@ -256,7 +213,7 @@ Espera maxima:               13
 
 #### Round Robin y el quantum
 
-Con la opción 2 el programa pregunta el quantum primero. Si escribes algo inválido, vuelve a preguntar:
+Con la opción 2 el programa pregunta el quantum primero. Si se ingresa algo inválido, vuelve a preguntar:
 
 ```
 --- Round Robin ---
@@ -278,9 +235,9 @@ Si el quantum es mayor o igual que la ráfaga más larga, Round Robin se comport
 
 La comparación ejecuta cada algoritmo sobre **el mismo conjunto de procesos**, así las diferencias se deben solo al algoritmo.
 
-1. Elige los algoritmos escribiendo sus números separados por espacios o comas (por ejemplo `1 3`). Con solo Enter se eligen todos. Hay que elegir al menos dos.
+1. Elija los algoritmos escribiendo sus números separados por espacios o comas (por ejemplo `1 3`). Con solo Enter se eligen todos. Hay que elegir al menos dos.
 2. Si entre ellos está Round Robin, el programa pide el quantum **una sola vez**; todos los algoritmos que lo usan comparten ese valor.
-3. Indica la cantidad de procesos y la semilla.
+3. Indique la cantidad de procesos y la semilla.
 
 Ejemplo: comparar FCFS y Prioridad con 5 procesos y semilla 42.
 
@@ -331,8 +288,6 @@ Uso de CPU:              100.00 %
 Espera promedio:      225393.81
 ```
 
-En las pruebas con 1 000 000 de procesos, cada algoritmo tardó menos de un segundo y el pico de memoria fue de unos 200 MB (compilado con optimización). Con tantos procesos llegando casi a la vez, las esperas son enormes: es lo esperable, porque todos compiten por una sola CPU.
-
 ### Errores y mensajes
 
 | Situación | Qué hace el programa |
@@ -342,44 +297,10 @@ En las pruebas con 1 000 000 de procesos, cada algoritmo tardó menos de un segu
 | Un error durante la simulación | Muestra `Error: ...` y vuelve al menú. |
 | La entrada se cierra (por ejemplo, Ctrl+D o el fin de un archivo redirigido) | Termina de forma ordenada con `Entrada cerrada. Saliendo de SchedSim.` |
 
-### Usar el programa con un guion
-
-Como el programa lee de la entrada estándar, se puede automatizar. Por ejemplo, comparar los tres algoritmos con quantum 3, 100 000 procesos y semilla 7, y salir:
-
-```bash
-printf '4\n\n3\n100000\n7\n0\n' | ./build/schedsim
-```
-
----
-
-## Pruebas
-
-Hay 16 archivos de pruebas en `pruebas/`: uno por cada estructura de datos y por cada componente (generador, algoritmos, simulador con cantidades grandes, salida, comparador, entrada y menú). Los algoritmos se comprueban con resultados **calculados a mano**, y el menú con sesiones de teclado simuladas.
-
-Con CMake:
-
-```bash
-cd build
-ctest --output-on-failure
-```
-
-(Con Visual Studio u otro generador de varias configuraciones: `ctest -C Release --output-on-failure`.)
-
-Una prueba suelta, sin CMake:
-
-```bash
-g++ -std=c++17 -O2 pruebas/prueba_fcfs.cpp -o prueba_fcfs
-./prueba_fcfs
-```
-
-Para detectar errores de memoria, compila con `-DSCHEDSIM_SANITIZERS=ON` (ver [Opciones de CMake](#opciones-de-cmake)) o a mano con `-fsanitize=address,undefined`.
-
----
-
 ## Limitaciones de la versión 1
 
 - Una sola CPU, sin entrada/salida de los procesos y **sin costo de cambio de contexto**.
 - Los procesos son **solo aleatorios**
 - La prioridad no tiene expulsión ni envejecimiento: un proceso poco urgente puede esperar mucho
 - Los tiempos son enteros y deben caber en `int` (el programa lo valida).
-- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.gráfica. |
+- La reproducibilidad por semilla es exacta con el mismo compilador, pero puede variar entre compiladores.
