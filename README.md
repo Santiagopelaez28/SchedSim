@@ -288,8 +288,6 @@ Uso de CPU:              100.00 %
 Espera promedio:      225393.81
 ```
 
-En las pruebas con 1 000 000 de procesos, cada algoritmo tardó menos de un segundo y el pico de memoria fue de unos 200 MB (compilado con optimización). Con tantos procesos llegando casi a la vez, las esperas son enormes: es lo esperable, porque todos compiten por una sola CPU.
-
 ### Errores y mensajes
 
 | Situación | Qué hace el programa |
