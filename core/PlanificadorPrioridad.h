@@ -9,8 +9,8 @@
 #include "Proceso.h"
 
 /**
- * Lo que el min-heap guarda de cada proceso listo son los datos para ordenarlo y el
- * índice a la tabla de procesos.
+ * Se crea una estructura con parametros especificos como la llegada y la prioridad del proceso, además,
+ *  almacena el indice de dicho proceso en la tabla
  */
 struct EntradaListo {
     int prioridad = 0;
@@ -37,7 +37,7 @@ struct PrecedeEntradaListo {
 };
 
 /**
- * PlanificadorPrioridad: prioridad sin expulsión (no apropiativo).
+ * Planificador por prioridad no apropiativo.
  *
  * Cada vez que la CPU queda libre se elige, entre los procesos ya llegados, el
  * de mayor prioridad. Una vez que un proceso toma la CPU la conserva hasta
@@ -62,7 +62,7 @@ public:
     // Sin expulsión: usa la CPU todo lo que le falta.
     int quantum(const Proceso& p) const override { return p.restante; }
 
-    // Próximo proceso que saldría (solo lectura). Útil para mostrar la cola de listos.
+    // Próximo proceso que saldría
     const EntradaListo& proximo() const { return listos_.primero(); }
     std::size_t cantidadListos() const { return listos_.tamano(); }
 

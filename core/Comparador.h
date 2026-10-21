@@ -31,19 +31,15 @@ struct ResultadoAlgoritmo {
 };
 
 /**
- * Ejecuta cada algoritmo sobre una copia del MISMO conjunto de procesos y devuelve
+ * Ejecuta cada algoritmo sobre una copia del mismo conjunto de procesos y devuelve
  * un resultado por algoritmo, en el orden pedido.
- *
- * El quantum es único: lo usan los algoritmos que lo necesitan (Round Robin) y
- * los demás lo ignoran. Sirve para comparar cualquier subconjunto de algoritmos,
- * dos o los que haya.
  *
  * Se ejecuta de uno en uno y no se conserva el Simulador, así que la memoria
  * máxima es la de una sola simulación. El Gantt no se registra.
  *
  * Lanza std::invalid_argument si no se elige ningún algoritmo, si hay uno repetido,
  * o si el quantum falta o no es válido cuando Round Robin participa. Esas
- * comprobaciones ocurren ANTES de simular nada.
+ * comprobaciones ocurren antes de la simulación.
  */
 inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
     const ArregloDinamico<Proceso>& procesos, const ArregloDinamico<Algoritmo>& algoritmos,
@@ -60,8 +56,8 @@ inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
         }
     }
 
-    // Se crean todos los planificadores primero: si el quantum no sirve, falla
-    // antes de gastar tiempo simulando.
+    /**  Se crean todos los planificadores primero: si el quantum no sirve, falla
+    antes de gastar tiempo simulando. */
     ArregloDinamico<std::unique_ptr<Planificador>> planificadores(algoritmos.tamano());
     for (const Algoritmo algoritmo : algoritmos) {
         planificadores.agregar(crearPlanificador(algoritmo, quantum));
@@ -88,4 +84,4 @@ inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
     return resultados;
 }
 
-#endif // COMPARADOR_H
+#endif

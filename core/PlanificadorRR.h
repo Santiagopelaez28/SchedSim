@@ -16,6 +16,10 @@
  */
 class PlanificadorRR : public Planificador {
 public:
+    /** 
+     * Se almacena el quantum ingresado por el usuario o el quantum por defecto si no se elige
+     * @param quantum El quantum de tiempo utilizado por el algoritmo
+     */
     explicit PlanificadorRR(int quantum) : quantum_(quantum) {
         if (quantum <= 0) {
             throw std::invalid_argument("PlanificadorRR: el quantum debe ser mayor que 0");
@@ -34,6 +38,7 @@ public:
     
     int quantum(const Proceso&) const override { return quantum_; }
     
+    // Metodo Setter para el nuevo quantum
     void setQuantum(int quantum) {
         if (quantum <= 0) {
             throw std::invalid_argument("PlanificadorRR: el quantum debe ser mayor que 0");

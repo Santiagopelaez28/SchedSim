@@ -12,68 +12,49 @@
 #include "Proceso.h"
 
 /**
- * Parámetros del generador. Los valores por defecto producen cargas pequeñas
- * y fáciles de seguir a mano.
- *
- * Los tiempos son int. Para que el reloj de la simulación nunca desborde, se exige
- *   cantidad * rafagaMax + llegadaMax <= INT_MAX (2147483647).
- *
- * Convención de prioridad: MENOR número = MAYOR prioridad (1 es la más urgente).
- * Las prioridades se sortean de forma uniforme y pueden repetirse; los empates
- * deben resolverse en el algoritmo (por ejemplo, por orden de llegada).
+ * Parámetros del generador, se utilizan valores enteros para cada uno y para el tiempo de CPU
  */
 struct ConfigGenerador {
-    // Tope de procesos por simulación. Con él la memoria queda acotada (unos
-    // 200 MB) y la simulación termina en pocos segundos.
-    static constexpr int MAX_PROCESOS = 1000000;
-
-    int cantidad = 30;                // cuántos procesos generar (1 a MAX_PROCESOS)
+    static constexpr int MAX_PROCESOS = 1000000;    // Maximo de procesos posibles, evita que el programa tarde demasiado en responder
+    int cantidad = 30;                // Cantidad de procesos a generar (maximo 1000000)
     int llegadaMin = 0;              // instante de llegada (>= 0)
     int llegadaMax = 10;
-    int rafagaMin = 4;               // tiempo de CPU requerido (>= 1)
+    int rafagaMin = 5;               // tiempo de CPU requerido (>= 1)
     int rafagaMax = 50;
     int prioridadMin = 1;            // la más urgente (>= 1)
     int prioridadMax = 10;            // la menos urgente
     std::optional<unsigned> semilla; // si no se indica, se elige una al azar
 
-    // Ajustes por método, por comodidad de la interfaz (los campos también son públicos).
+    // Métodos Setters para cantidad y semilla, reciben el valor ingresado por el usuario
     void setCantidad(int nuevaCantidad) { cantidad = nuevaCantidad; }
-    void setSemilla(std::optional<unsigned> nuevaSemilla) { semilla = nuevaSemilla; }
+    void setSemilla(std::optional<unsigned> nuevaSemilla) { semilla = nuevaSemilla; }   // La semilla recibe un valor opcional, el usuario puede elegir no ingresar nada
 };
 
 /**
  * GeneradorProcesos
  *
- * Genera un conjunto de procesos aleatorio pero REPRODUCIBLE: la semilla se
- * fija al construir el generador y generar() siempre devuelve el mismo
- * conjunto para esa semilla. Para obtener un conjunto distinto, se crea otro
- * generador. La semilla usada se puede consultar con semilla() para mostrarla
- * en pantalla y volver a usarla.
- *
- * Nota: std::mt19937 es idéntico en todos los compiladores, pero las
- * distribuciones de <random> pueden variar entre implementaciones, así que la
- * misma semilla garantiza el mismo conjunto solo con el mismo compilador.
+ * Genera un conjunto de procesos aleatorio a partir de la semilla de la configuración, en diferentes compiladores la misma semilla puede generar diferentes valores.
  */
 class GeneradorProcesos {
 public:
     explicit GeneradorProcesos(const ConfigGenerador& config) : config_(config), semilla_(0) {
         validar();
-        semilla_ = config_.semilla.has_value() ? *config_.semilla : std::random_device{}();
+        semilla_ = config_.semilla.has_value() ? *config_.semilla : std::random_device{}();     // Valida que la semilla tenga un valor para usar
     }
 
     unsigned semilla() const { return semilla_; }
     const ConfigGenerador& config() const { return config_; }
 
+    // Utiliza valores aleatorios para insertar cada parametro correspondiente por proceso
     ArregloDinamico<Proceso> generar() const {
         std::mt19937 motor(semilla_);
         std::uniform_int_distribution<int> llegada(config_.llegadaMin, config_.llegadaMax);
         std::uniform_int_distribution<int> rafaga(config_.rafagaMin, config_.rafagaMax);
         std::uniform_int_distribution<int> prioridad(config_.prioridadMin, config_.prioridadMax);
 
+        // Crea la tabla donde se mostrarán los procesos creados
         ArregloDinamico<Proceso> tabla(static_cast<std::size_t>(config_.cantidad));
         for (int pid = 1; pid <= config_.cantidad; ++pid) {
-            // Los sorteos van en sentencias separadas, en orden fijo: C++ no
-            // define en qué orden se evalúan los argumentos de una llamada.
             const int l = llegada(motor);
             const int r = rafaga(motor);
             const int p = prioridad(motor);
@@ -116,4 +97,4 @@ private:
     }
 };
 
-#endif // GENERADOR_PROCESOS_H
+#endif

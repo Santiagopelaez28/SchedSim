@@ -10,10 +10,8 @@
  * Planificador (clase abstracta)
  *
  * Define lo que el Simulador necesita de cualquier algoritmo. Los
- * planificadores guardan índices a la tabla de procesos, así el
- * estado de cada proceso vive en un solo lugar.
- *
- * cada algoritmo nuevo hereda de esta clase.
+ * planificadores guardan índices a la tabla de procesos.
+ * Por lo que cada algoritmo nuevo hereda de esta clase.
  */
 class Planificador {
 public:
