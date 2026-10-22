@@ -20,7 +20,7 @@
  */
 struct ResultadoAlgoritmo {
     Algoritmo algoritmo = Algoritmo::FCFS;
-    std::string nombre;                 // nombre completo, p. ej. "Round Robin (quantum = 3)"
+    std::string nombre;                 // nombre completo
     int tiempoTotal = 0;
     int tiempoOcupado = 0;
     double utilizacionCPU = 0.0;
@@ -36,10 +36,6 @@ struct ResultadoAlgoritmo {
  *
  * Se ejecuta de uno en uno y no se conserva el Simulador, así que la memoria
  * máxima es la de una sola simulación. El Gantt no se registra.
- *
- * Lanza std::invalid_argument si no se elige ningún algoritmo, si hay uno repetido,
- * o si el quantum falta o no es válido cuando Round Robin participa. Esas
- * comprobaciones ocurren antes de la simulación.
  */
 inline ArregloDinamico<ResultadoAlgoritmo> compararAlgoritmos(
     const ArregloDinamico<Proceso>& procesos, const ArregloDinamico<Algoritmo>& algoritmos,

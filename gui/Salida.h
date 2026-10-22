@@ -8,7 +8,7 @@
 #include "../core/Simulador.h"
 
 /**
- * Política de salida por consola según la cantidad de procesos.
+ * Validación de salida por consola según la cantidad de procesos.
  *
  *   - Hasta umbralDetalle procesos: tabla completa de procesos, diagrama de Gantt
  *     (partido en bloques que caben en anchoLinea) y tabla de resultados completa.
@@ -63,4 +63,4 @@ inline void mostrarResultados(std::ostream& os, const Simulador& simulador,
     }
 }
 
-#endif // SALIDA_H
+#endif 
